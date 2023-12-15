@@ -1,0 +1,38 @@
+#!/bin/sh
+
+if [ $# -ne 1 ]; then
+	echo "please provide filename"
+fi
+
+for element in $@
+do
+	FILE_FULL=$element
+	if [ "./$FILE_FULL" = $0 ] || [ "$FILE_FULL" = *"nocomments"* ]; then
+		echo "skipping $FILE_FULL..."
+		continue
+	fi
+
+	echo "PROCESSING FILE: $FILE_FULL"
+
+	NAME=$(echo $FILE_FULL | awk -F'.' '{print $1}')
+	EXTENSION=$(echo $FILE_FULL | awk -F'.' '{print $2}')
+
+
+	if [ "$EXTENSION" = "py" ]; then
+		COMMENT="#"
+	elif [ "$EXTENSION" = "cpp" ] || [ "$EXTENSION" = "hpp" ] || [ "$EXTENSION" = "c" ]; then
+		COMMENT="//"
+	else
+		echo "error: file extension not recognized\n"
+		continue
+	fi
+
+	echo "extension recognized: $EXTENSION"
+	echo "comment type: $COMMENT"
+
+	sed -e "\|^[[:space:]]*$COMMENT|d" $FILE_FULL > "$NAME-temp.$EXTENSION" # remove full comments
+	sed -e "s|[[:blank:]]*$COMMENT.*||g" "$NAME-temp.$EXTENSION" > "$NAME-nocomments.$EXTENSION" # remove inline comments
+
+	rm "$NAME-temp.$EXTENSION"
+	echo "file processed successfuly\n"
+done
